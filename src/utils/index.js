@@ -1,6 +1,10 @@
 import * as mammoth from "mammoth";
 import * as pdfjsLib from 'pdfjs-dist';
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.entry';
+import { diffWords } from "diff";
+import { Document, Packer, Paragraph, TextRun } from "docx";
+import jsPDF from "jspdf";
+import { saveAs } from "file-saver";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
@@ -67,4 +71,76 @@ export const extractFileMetadata = (file) => {
     fileType: file.type || "Unknown",
     fileSize: file.size,
   };
+};
+
+
+export const analyzeTextHandler = async (text, openai) => {
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: "You are a helpful assistant that improves text for grammar, clarity, and readability." },
+        { role: "user", content: `Improve the following text for grammar, clarity, and readability:\n\n${text}` },
+      ],
+      max_tokens: 500,
+      temperature: 0.7,
+    });
+    return response.choices[0].message.content;
+  } catch (error) {
+    throw new Error("Failed to analyze text.");
+  }
+};
+
+export const processAPIResponse = (response) => {
+  return response
+    .split("\n")
+    .filter((s) => s.trim())
+    .map((s) => ({ text: s }));
+};
+
+export const handleError = (error, context) => {
+  const errorMessage = error.message || "An unknown error occurred.";
+  return `Failed to ${context}. ${errorMessage}`;
+};
+
+export const saveAsTxt = (content, fileName) => {
+  const updatedFileName = fileName ? fileName.replace(/(\.\w+)$/, "-updated.txt") : "updated-text.txt";
+  const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+  saveAs(blob, updatedFileName);
+};
+
+export const saveAsDocx = (content, fileName) => {
+  const doc = new Document({
+    sections: [{ children: [new Paragraph(new TextRun(content))] }],
+  });
+
+  Packer.toBlob(doc).then((blob) => {
+    const updatedFileName = fileName ? fileName.replace(/(\.\w+)$/, "-updated.docx") : "updated-text.docx";
+    saveAs(blob, updatedFileName);
+  });
+};
+
+export const saveAsPdf = (content, fileName) => {
+  const doc = new jsPDF();
+  const lines = doc.splitTextToSize(content, 180);
+  doc.text(lines, 10, 10);
+  const updatedFileName = fileName ? fileName.replace(/(\.\w+)$/, "-updated.pdf") : "updated-text.pdf";
+  doc.save(updatedFileName);
+};
+
+export const highlightChanges = (original, suggestion) => {
+  const differences = diffWords(original, suggestion);
+  return differences.map((part, index) => {
+    if (part.added) {
+      return (
+        <span key={index} style={{ backgroundColor: "rgba(0, 255, 0, 0.3)" }}>
+          {part.value}
+        </span>
+      );
+    }
+    if (!part.removed) {
+      return <span key={index} style={{ whiteSpace: "pre-wrap" }}>{part.value}</span>;
+    }
+    return null;
+  });
 };

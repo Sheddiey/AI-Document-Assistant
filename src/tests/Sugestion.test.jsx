@@ -1,12 +1,13 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { Provider } from "react-redux";
-import configureStore from "redux-mock-store";
-import Suggestions from "../components/Suggestion";
 import * as openai from "openai";
 import { message } from "antd";
 import { saveAs } from "file-saver";
+import createTestStore from "./TestingStore";
+import Suggestions from "../components/Suggestion";
 
+// Mock implementations
 jest.mock("openai", () => ({
   OpenAI: jest.fn().mockImplementation(() => ({
     chat: {
@@ -34,13 +35,12 @@ jest.mock("antd", () => {
   };
 });
 
-const mockStore = configureStore([]);
-
 describe("Suggestions Component", () => {
   let store;
 
   beforeEach(() => {
-    store = mockStore({
+    // Initialize the store with your initial state
+    store = createTestStore({
       fileUpload: { fileContent: "Original text.", name: "test-file.txt" },
     });
     jest.clearAllMocks();
@@ -58,7 +58,7 @@ describe("Suggestions Component", () => {
   });
 
   it("shows a warning if no file content is provided", async () => {
-    store = mockStore({ fileUpload: { fileContent: "", name: "" } });
+    store = createTestStore({ fileUpload: { fileContent: "", name: "" } });
 
     render(
       <Provider store={store}>

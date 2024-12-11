@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import { Provider } from "react-redux";
-import configureStore from "redux-mock-store";
+import createTestStore from "./TestingStore";
 import DocxViewer from "../components/DocxViewer";
 import mammoth from "mammoth";
 
@@ -9,18 +9,14 @@ jest.mock("mammoth", () => ({
   convertToHtml: jest.fn(),
 }));
 
-const mockStore = configureStore([]);
-
 describe("DocxViewer Component", () => {
   let store;
 
   beforeEach(() => {
-    store = mockStore({
-      fileUpload: { rawFile: null },
-    });
-
-    // Mock Blob.arrayBuffer method
-    Blob.prototype.arrayBuffer = jest.fn().mockResolvedValue(new ArrayBuffer(8));
+    // Mock Blob.arrayBuffer method for DOCX file processing
+    Blob.prototype.arrayBuffer = jest
+      .fn()
+      .mockResolvedValue(new ArrayBuffer(8));
   });
 
   afterEach(() => {
@@ -28,6 +24,10 @@ describe("DocxViewer Component", () => {
   });
 
   it("renders fallback text when no file is uploaded", () => {
+    store = createTestStore({
+      fileUpload: { rawFile: null },
+    });
+
     render(
       <Provider store={store}>
         <DocxViewer />
@@ -44,11 +44,13 @@ describe("DocxViewer Component", () => {
       type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     });
 
-    store = mockStore({
+    store = createTestStore({
       fileUpload: { rawFile: mockRawFile },
     });
 
-    mammoth.convertToHtml.mockResolvedValue({ value: "<p>Converted content</p>" });
+    mammoth.convertToHtml.mockResolvedValue({
+      value: "<p>Converted content</p>",
+    });
 
     render(
       <Provider store={store}>
@@ -73,11 +75,13 @@ describe("DocxViewer Component", () => {
       type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     });
 
-    store = mockStore({
+    store = createTestStore({
       fileUpload: { rawFile: mockRawFile },
     });
 
-    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    const consoleErrorSpy = jest
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
     mammoth.convertToHtml.mockRejectedValue(new Error("Conversion failed"));
 
     render(
@@ -87,10 +91,12 @@ describe("DocxViewer Component", () => {
     );
 
     // Verify that the error is logged
-    await waitFor(() => expect(consoleErrorSpy).toHaveBeenCalledWith(
-      "Error rendering DOCX with Mammoth:",
-      expect.any(Error)
-    ));
+    await waitFor(() =>
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "Error rendering DOCX with Mammoth:",
+        expect.any(Error)
+      )
+    );
 
     consoleErrorSpy.mockRestore();
   });

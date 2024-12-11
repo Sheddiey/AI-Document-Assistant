@@ -5,6 +5,8 @@ import PDFViewer from "../components/PDFViewer";
 import DocxViewer from "../components/DocxViewer";
 import TextViewer from "../components/TextViewer";
 import Suggestions from "../components/Suggestion";
+import { Link } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 
 const DocumentViewer = () => {
   const { fileType } = useSelector((state) => state.fileUpload);
@@ -33,9 +35,17 @@ const DocumentViewer = () => {
       <div className="min-h-screen w-[95%] pb-10 mx-auto ">
         <div className="grid md:grid-cols-2 grid-cols-1 gap-5">
           <div className="">
-            <h2 className="font-semibold text-3xl text-center p-4 text-blue-800">
-              Original Document
-            </h2>
+            <div className="flex items-center">
+              <Link to="/">
+                <button className="flex items-center gap-2 bg-white py-1 px-2">
+                  <ArrowLeft />
+                  <p>Back</p>
+                </button>
+              </Link>
+              <p className="font-semibold text-3xl text-center p-4 text-blue-800">
+                Original Document
+              </p>
+            </div>
             {renderDocument()}
           </div>
           <div>
