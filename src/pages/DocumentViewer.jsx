@@ -42,14 +42,14 @@ const DocumentViewer = () => {
                   <p>Back</p>
                 </button>
               </Link>
-              <p className="font-semibold text-3xl text-center p-4 text-blue-800">
+              <p className="font-semibold text-xl md:text-3xl text-center p-4 text-blue-800">
                 Original Document
               </p>
             </div>
             {renderDocument()}
           </div>
           <div>
-            <h2 className="font-semibold text-3xl text-center p-4 text-blue-800">
+            <h2 className="font-semibold text-xl md:text-3xl text-center p-4 text-blue-800">
               Improved Document
             </h2>
             <div className="p- border border-gray-300 rounded-md shadow-lg">
